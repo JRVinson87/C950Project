@@ -9,7 +9,6 @@ from datetime import *
 class PackageTable:
     truck_manifest = []
     delivery_snapshot = dict()
-    dock_avail = True
 
     # Constructor with optional initial capacity parameter.
     # Our current WGUPS location handles 40 packages a day.
@@ -61,18 +60,47 @@ class PackageTable:
             if p[0] == pack_id:
                 bucket_list.remove([p[0], p[1]])
 
-    def snapshot(self, t):
-        h = int(t.split(':')[0])
-        m = int(t.split(':')[1])
-        search_time = datetime.combine(date.today(), time(hour=h, minute=m))
-        print(search_time)
-        for k, v in self.delivery_snapshot.items():
-            if search_time > k:
-                x = v
+    def snapshot(self):
+        while True:
+            start = input('\nEnter 1 to check a snapshot of package status or 2 to exit: ')
+            if start == "1":
+                try:
+                    t = input('What time would you like to search for? (24 hour format XX:XX): ')
+                    datetime.strptime(t, '%H:%M')
+                except ValueError:
+                    print('Invalid entry. Please use 24 hour format XX:XX.')
+                    continue
+
+                h = int(t.split(':')[0])
+                m = int(t.split(':')[1])
+                search_time = datetime.combine(date.today(), time(hour=h, minute=m))
+                for k, v in self.delivery_snapshot.items():
+                    if search_time > k:
+                        x = v
+                    else:
+                        break
+                start_2 = input('Enter "ALL" to see all packages or enter a specific package ID: ')
+                if start_2.upper() == 'ALL':
+                    print('STATUS OF ALL PACKAGES AT ' + str(search_time))
+                    print('--------------------------------------')
+                    for row in x:
+                        print(row)
+                elif start_2.isdigit():
+                    nf = True
+                    for row in x:
+                        if start_2 == row.replace(',', "").split()[0]:
+                            nf = False
+                            print(row)
+                    if nf:
+                        print('Package ID not found.')
+                else:
+                    print('Invalid entry.')
+            elif start == "2":
+                print('Exiting')
+                return
             else:
-                break
-        for row in x:
-            print(row)
+                print("Invalid input.")
+                continue
 
 
 # reads CSV of package data and loads package objects into the package hashtable
@@ -105,9 +133,10 @@ def initialize_packages(csv_file, my_hash):
 def prioritize_packages(my_hash):
     # create package priority lists to load trucks with
     # create a temporary set to hold special note values
-    priority0 = []
-    priority1 = []
-    priority2 = []
+    prio_special = []
+    prio_linked = []
+    prio_morning = []
+    prio_norm = []
     temp = set()
 
     # search for the package ID in the bucket list
@@ -115,33 +144,38 @@ def prioritize_packages(my_hash):
         q = p[0][1]
         # check special notes, put ones containing special notes in priority 2
         if 'DELAYED' in q.note.upper() or 'CAN' in q.note.upper():
-            priority2.append(q)
+            prio_special.append(q)
         elif 'MUST' in q.note.upper():
             temp.update([int(i) for i in q.note.replace(',', "").split() if i.isdigit()])
             # temp.update(temp_list)
-            priority0.append(q)
+            prio_linked.append(q)
+        elif q.deadline < time(12, 00):
+            prio_morning.append(q)
         else:
-            priority1.append(q)
+            prio_norm.append(q)
 
     counter = 0
-    for i in priority1:
+    for i in prio_norm:
         if len(temp) < 1:
             break
         elif i.pack_id in temp:
-            priority0.append(i)
+            prio_linked.append(i)
             temp.remove(i.pack_id)
-            priority1.insert(0, [])
-            priority1.remove(i)
+            prio_norm.insert(0, [])
+            prio_norm.remove(i)
             counter += 1
 
-    del priority1[:counter]
-    priority0.sort(key=lambda a: a.address)
-    priority0.sort(key=lambda d: d.deadline)
-    priority1.sort(key=lambda a: a.address)
-    priority1.sort(key=lambda d: d.deadline)
-    priority2.sort(key=lambda a: a.address)
-    priority2.sort(key=lambda d: d.deadline)
-    my_hash.truck_manifest.insert(0, priority0)
-    my_hash.truck_manifest.insert(1, priority1)
-    my_hash.truck_manifest.insert(2, priority2)
+    del prio_norm[:counter]
+    prio_linked.sort(key=lambda a: a.address)
+    prio_linked.sort(key=lambda d: d.deadline)
+    prio_norm.sort(key=lambda a: a.address)
+    prio_norm.sort(key=lambda d: d.deadline)
+    prio_morning.sort(key=lambda a: a.address)
+    prio_morning.sort(key=lambda d: d.deadline)
+    prio_special.sort(key=lambda a: a.address)
+    prio_special.sort(key=lambda d: d.deadline)
+    my_hash.truck_manifest.insert(0, prio_linked)
+    my_hash.truck_manifest.insert(1, prio_morning)
+    my_hash.truck_manifest.insert(2, prio_norm)
+    my_hash.truck_manifest.insert(3, prio_special)
 
