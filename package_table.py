@@ -81,7 +81,7 @@ class PackageTable:
                         break
                 start_2 = input('Enter "ALL" to see all packages or enter a specific package ID: ')
                 if start_2.upper() == 'ALL':
-                    print('STATUS OF ALL PACKAGES AT ' + str(search_time))
+                    print('\nSTATUS OF ALL PACKAGES AT ' + str(search_time))
                     print('--------------------------------------')
                     for row in x:
                         print(row)

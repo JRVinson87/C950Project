@@ -59,6 +59,7 @@ class Truck:
                         break
 
     def deliver_packages(self, mh, dm):
+        print('TRUCK ' + str(self.number) + ' DELIVERY ' + str(self.delivery_num) + ' DEPARTING @ ' + str(self.work_time.current_time))
         a = 'HUB'
         # checks each package against hub
         while len(self.table) > 0:

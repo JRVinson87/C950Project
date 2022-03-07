@@ -40,12 +40,12 @@ user_input = "10:20"
 my_hash.snapshot(user_input)
 print('---------------------------')
 """
-"""
-print(truck1.print_miles_driven())
-print(truck2.print_miles_driven())
-print(truck2.print_miles_driven() + truck1.print_miles_driven())
+print('ALL DELIVERIES FINISHED.')
+print('TOTAL MILES DRIVEN BY TRUCK 1: ' + str(truck1.print_miles_driven()))
+print('TOTAL MILES DRIVEN BY TRUCK 2: ' + str(truck2.print_miles_driven()))
+print('TOTAL COMBINED MILES: ' + str(truck2.print_miles_driven() + truck1.print_miles_driven()))
 print('---------------------------')
-"""
+
 my_hash.snapshot()
 """
 start_2 = input('Enter 1 to check a snapshot of package status or 2 to exit: ')
