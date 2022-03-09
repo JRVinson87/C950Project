@@ -116,7 +116,7 @@ def initialize_packages(csv_file, my_hash):
             state = p[3]
             zipcode = p[4]
             if 'EOD' in p[5]:
-                deadline = time(20, 00)
+                deadline = time(17, 00)
             else:
                 d = datetime.strptime(p[5], '%H:%M %p')
                 deadline = d.time()
