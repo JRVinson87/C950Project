@@ -6,38 +6,48 @@ from package import *
 from datetime import *
 
 
+# Class to create a hash table to store the packages of the day.
 class PackageTable:
+    # Creates a master truck manifest.
     truck_manifest = []
+    # Creates a dictionary to store a timed copy of the package hashtable after every delivery.
     delivery_snapshot = dict()
 
     # Constructor with optional initial capacity parameter.
     # Our current WGUPS location handles 40 packages a day.
-    # Assigns all buckets with an empty list.
     def __init__(self, initial_capacity):
-        # initialize the hash table with empty bucket list entries.
+        # Initialize the hash table with empty bucket list entries.
         self.table = []
         for i in range(initial_capacity):
             self.table.append([])
 
-    # inserts a package object into the package hashtable
+    """
+    Hashes passed in package ID. 
+    Checks current package table for the passed in package ID.
+    If found, updates that package.
+    If not found, inserts a package object into the package hashtable.
+    """
     def insert(self, pack_id, data):  # does both insert and update
-        # get the bucket list where this package will go.
+        # Check list.
         bucket = hash(pack_id) % len(self.table)
         bucket_list = self.table[bucket]
 
-        # update package if it is already in the bucket
+        # Update.
         for p in bucket_list:
             if p[0] == pack_id:
                 p[1] = data
                 return True
 
-        # if not, insert the package to the end of the bucket list.
+        # Insert.
         package = [pack_id, data]
         bucket_list.append(package)
         return True
 
-    # Searches for a package with matching package ID in the hash table.
-    # Returns the package if found, or None if not found.
+    """
+    Hashes passed in package ID and searches package table.
+    If the package is found, the package data is returned.
+    If it is not found, None is returned.
+    """
     def lookup(self, pack_id):
         # get the bucket list where this package would be.
         bucket = hash(pack_id) % len(self.table)
@@ -51,15 +61,20 @@ class PackageTable:
 
     # Removes a package with matching key from the hash table.
     def remove(self, pack_id):
-        # get the bucket list where this package will be removed from.
+        # Hash the package ID and check if it's in the table.
         bucket = hash(pack_id) % len(self.table)
         bucket_list = self.table[bucket]
 
-        # remove the package from the bucket list if it is present.
+        # Remove the package from the table if it is present.
         for p in bucket_list:
             if p[0] == pack_id:
                 bucket_list.remove([p[0], p[1]])
 
+    """
+    Function to perform package "snapshot" operations.
+    Asks the user for a specified time to check and then looks up the stored snapshot of package data.
+    The user can print the data for all packages or a specified package.
+    """
     def snapshot(self):
         while True:
             start = input('\nEnter 1 to check a snapshot of package status or 2 to exit: ')
@@ -74,6 +89,8 @@ class PackageTable:
                 h = int(t.split(':')[0])
                 m = int(t.split(':')[1])
                 search_time = datetime.combine(date.today(), time(hour=h, minute=m))
+                # Look through snapshot items by time.
+                # Return the time closest to, but not greater than, the users time input.
                 for k, v in self.delivery_snapshot.items():
                     if search_time > k:
                         x = v
@@ -84,7 +101,7 @@ class PackageTable:
                     print('\nSTATUS OF ALL PACKAGES AT ' + str(search_time))
                     print('--------------------------------------')
                     for row in x:
-                        print(row)
+                        print('Package ID: ' + str(row))
                 elif start_2.isdigit():
                     nf = True
                     for row in x:
@@ -103,11 +120,11 @@ class PackageTable:
                 continue
 
 
-# reads CSV of package data and loads package objects into the package hashtable
+# Reads CSV of package data and loads package objects into the package hashtable.
 def initialize_packages(csv_file, my_hash):
     with open(csv_file) as packageCSV:
         reader = csv.reader(packageCSV, delimiter=",")
-        # skip the csv header
+        # Skip the csv header
         next(reader)
         for p in reader:
             pack_id = int(p[0])
@@ -115,6 +132,11 @@ def initialize_packages(csv_file, my_hash):
             city = p[2]
             state = p[3]
             zipcode = p[4]
+            """
+            Check the deadline. 
+            If it is "EOD" (end of day), then replace it with the actual end of day time, 17:00.
+            If it is a written time, turn it into a proper time object.
+            """
             if 'EOD' in p[5]:
                 deadline = time(17, 00)
             else:
@@ -124,36 +146,50 @@ def initialize_packages(csv_file, my_hash):
             note = p[7]
             status = "AT HUB"
 
-            # create package object
+            # Create package object.
             p = Package(pack_id, address, city, state, zipcode, deadline, weight, note, status)
-            # insert package into package hashtable
+            # Insert package into package hashtable.
             my_hash.insert(pack_id, p)
 
 
+# Function to prioritize the days packages to meet constraints and deadlines.
 def prioritize_packages(my_hash):
-    # create package priority lists to load trucks with
-    # create a temporary set to hold special note values
+    # Create package priority lists to load trucks.
     prio_special = []
     prio_linked = []
     prio_morning = []
     prio_norm = []
+    # Create a temporary set to hold special note values.
     temp = set()
 
-    # search for the package ID in the bucket list
+    # Iterate through package hash table.
     for p in my_hash.table:
         q = p[0][1]
-        # check special notes, put ones containing special notes in priority 2
+        # Check special notes.
+        # Put ones containing special notes in special priority.
         if 'DELAYED' in q.note.upper() or 'CAN' in q.note.upper():
             prio_special.append(q)
+        # Put ones that are linked with others, into linked priority.
+        # Keep track of all linked package ID's in temp set.
         elif 'MUST' in q.note.upper():
             temp.update([int(i) for i in q.note.replace(',', "").split() if i.isdigit()])
-            # temp.update(temp_list)
             prio_linked.append(q)
+        # Check deadline, put early deliveries in morning priority.
         elif q.deadline < time(12, 00):
             prio_morning.append(q)
+        # All others go in normal priority.
         else:
             prio_norm.append(q)
 
+    """
+    Check the normal priority list for any package ID's that are linked to
+    packages in the linked list. If a package is found, add it to the linked list
+    and remove it from the normal list. In order to not lose the correct current index
+    location in the for loop, add a [] to the front of the normal list.
+    Keep a counter for how many entries are added to the front of the normal list
+    and then delete that number of entries from the front of the normal list after
+    the for loops is completed.
+    """
     counter = 0
     for i in prio_norm:
         if len(temp) < 1:
@@ -164,8 +200,9 @@ def prioritize_packages(my_hash):
             prio_norm.insert(0, [])
             prio_norm.remove(i)
             counter += 1
-
     del prio_norm[:counter]
+
+    # Sort all the priority lists by address and deadline.
     prio_linked.sort(key=lambda a: a.address)
     prio_linked.sort(key=lambda d: d.deadline)
     prio_norm.sort(key=lambda a: a.address)
@@ -174,6 +211,8 @@ def prioritize_packages(my_hash):
     prio_morning.sort(key=lambda d: d.deadline)
     prio_special.sort(key=lambda a: a.address)
     prio_special.sort(key=lambda d: d.deadline)
+
+    # Insert the priority lists into the truck manifest in order of priority.
     my_hash.truck_manifest.insert(0, prio_linked)
     my_hash.truck_manifest.insert(1, prio_morning)
     my_hash.truck_manifest.insert(2, prio_norm)
