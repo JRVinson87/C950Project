@@ -5,6 +5,12 @@ from truck import *
 from project_time import KeepTime
 
 
+"""
+Time complexity for the entire program is O(n^2) because that is the max in the worst case scenarios.
+The other O(n) loops will never grow as fast as the O(n^2) nearest neighbor delivery algorithm.
+The space complexity is O(n) which is the total number of packages. Packages can have
+duplicate addresses so the distance adjacency matrix won't grow in line with the number of packages.
+"""
 print('Would you like to load data and start the work day?')
 start = input('Enter 1 to start or any other key to exit: ')
 if start == "1":

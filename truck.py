@@ -28,6 +28,7 @@ class Truck:
     to meet deadlines. After those packages are all delivered it will load and deliver normal priority.
     Truck 2 is prioritized to wait for delayed deliveries and then deliver those and
     any remaining morning deliveries. After those are all delivered it will check for normal priority.
+    Time and space complexity of this function is O(n) based on the number of elements the while loops iterate through.
     """
     def load_truck(self, manifest):
         # Check truck number.
@@ -91,6 +92,10 @@ class Truck:
     recorded, the miles driven are recorded, and a snapshot of the package hashtable is taken 
     and added to a dictionary. Finally, the return trip to the HUB is recorded and the truck
     ups it's delivery number in preparation for another delivery.
+    The time complexity of this function is O(n^2) + O(n) = O(n^2)
+    The while loops will always iterate through n items and the nested for loop will at max iterate through all n items as well.
+    The bottom for loop can be ignored since the next loop will always take longer.
+    The space complexity is O(n) since they are iterating through the same elements.
     """
     def deliver_packages(self, mh, dm):
         print('TRUCK ' + str(self.number) + ' DELIVERY ' + str(self.delivery_num) + ' DEPARTING @ ' + str(self.work_time.current_time))

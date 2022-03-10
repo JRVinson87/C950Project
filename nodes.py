@@ -9,7 +9,11 @@ class Node:
         self.address = address
 
 
-# Class for creation of the self-adjusting adjacency matrix
+"""
+Class for creation of the self-adjusting adjacency matrix
+At worst this will be time and space complexity of O(n).
+As the list grows, the size of the matrix matches the total amount of elements.
+"""
 class Matrix:
     nodes = {}  # node dictionary {key:value}
     edge_weights = []  # edge dictionary {key:value}
@@ -29,15 +33,9 @@ class Matrix:
         self.edge_weights[self.edge_index[node_a.address]][self.edge_index[node_b.address]] = weight
         self.edge_weights[self.edge_index[node_b.address]][self.edge_index[node_a.address]] = weight
 
-    def print_graph(self):
-        for v, i in self.edge_index.items():
-            print(str(v) + ' ', end='')
-            for j in range(len(self.edge_weights)):
-                print(str(self.edge_weights[i][j]) + ' ', end='')
-            print(' ')
-
 
 # Definition to read the distance table CSV and create the adjacency matrix.
+# Time and space complexity is O(n) depending on the number of elements read in from the CSV file.
 def load_nodes(csv_file, my_graph):
     # Initialize destination node to -1 in order to start at 0 in the for loop.
     to_node = -1

@@ -6,6 +6,14 @@ from package import *
 from datetime import *
 
 
+"""
+TIME AND SPACE COMPLEXITY FOR PACKAGE HASHTABLE:
+Best case time complexity O(1) - element is found directly at the given key.
+Worst case time complexity O(n) - the map can be incredibly large with 
+long linked lists and all the elements are checked one by one.
+Space complexity O(m+n) - every space in the hash table has memory associated with it.
+M is the size of the hash table and N is the number of elements.
+"""
 # Class to create a hash table to store the packages of the day.
 class PackageTable:
     # Creates a master truck manifest.
@@ -49,11 +57,11 @@ class PackageTable:
     If it is not found, None is returned.
     """
     def lookup(self, pack_id):
-        # get the bucket list where this package would be.
+        # Get the bucket list where this package would be.
         bucket = hash(pack_id) % len(self.table)
         bucket_list = self.table[bucket]
 
-        # search for the package ID in the bucket list
+        # Search for the package ID in the bucket list.
         for p in bucket_list:
             if p[0] == pack_id:
                 return p[1]
@@ -74,6 +82,7 @@ class PackageTable:
     Function to perform package "snapshot" operations.
     Asks the user for a specified time to check and then looks up the stored snapshot of package data.
     The user can print the data for all packages or a specified package.
+    Time and space complexity of this function is O(n) based on the number of elements the for loops iterate through.
     """
     def snapshot(self):
         while True:
@@ -121,6 +130,7 @@ class PackageTable:
 
 
 # Reads CSV of package data and loads package objects into the package hashtable.
+# Time and space complexity of this function is O(n) based on the number of elements the for loops iterate through.
 def initialize_packages(csv_file, my_hash):
     with open(csv_file) as packageCSV:
         reader = csv.reader(packageCSV, delimiter=",")
@@ -153,6 +163,7 @@ def initialize_packages(csv_file, my_hash):
 
 
 # Function to prioritize the days packages to meet constraints and deadlines.
+# Time and space complexity of this function is O(n) based on the number of elements the for loops iterate through.
 def prioritize_packages(my_hash):
     # Create package priority lists to load trucks.
     prio_special = []
